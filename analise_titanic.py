@@ -91,48 +91,64 @@ plt.xlabel('Sobreviveu (0 = Não, 1 = Sim)')
 plt.ylabel('Idade')
 plt.legend(title='Sexo')
 
-# Salvando e FECHANDO para liberar memória
+# Salvar 
 plt.savefig('graf2_sex_age_survived.png')
 plt.close() 
 print("\nSegundo gráfico gerado: 'graf2_sex_age_survived.png'")
 
-print("\nFase 5 - analise 4 variaveis - sex, age, class e survived")
 
-print(" \nFase 5 - Análise 4 variáveis - Sex, Age, Class e Survived")
+print("\nFase 5 - analise 4 variaveis - sex, age, class e survived- Boxplot - Outliers e tabela")
 
-# 1. Criando rótulos amigáveis para o gráfico
+
+
+#  Limpeza total
+import matplotlib.pyplot as plt
+import seaborn as sns
+plt.close('all')
+
+# Tabela 
+print("\n--- Tabela sobreviventes: Idade Média por Classe, Sexo e Status ---")
+
 df['Status'] = df['Survived'].map({0: 'Não Sobreviveu', 1: 'Sobreviveu'})
 
 
-# 2. Ranking numérico (O uso do sort_values que você queria)
-print("\n--- Idade Média dos Sobreviventes (Ordenado por Idade) ---")
-# Filtramos apenas quem sobreviveu e agrupamos
-analise_vivos = df[df['Survived'] == 1].groupby(['Pclass', 'Sex'])['Age'].mean().sort_values(ascending=False)
-print(analise_vivos)
+tabela_4_variaveis = df.groupby(['Pclass', 'Sex', 'Status'])['Age'].mean().unstack()
+print(tabela_4_variaveis)
 
-# 3. Criação do Gráfico 3 - Versão Estabilizada
+# Criar Gráfico 
 cores_status = {'Sobreviveu': 'green', 'Não Sobreviveu': 'red'}
 
-# Usamos o 'kind=bar' e 'errorbar=None' para garantir que não trave
+
 g = sns.catplot(
     x='Sex', 
     y='Age', 
     hue='Status', 
     col='Pclass', 
     data=df, 
-    kind='bar', 
+    kind='box', 
     palette=cores_status,
-    errorbar=None, # Remove cálculos pesados de erro
-    height=5, 
-    aspect=0.8
+    height=4.5, 
+    aspect=0.8,
+    showfliers=True #  outliers 
 )
 
-# Ajustando títulos e eixos de forma profissional
-g.set_axis_labels("Sexo", "Idade Média")
+
+g.figure.set_layout_engine('none') 
+
+# Títulos 
+g.set_axis_labels("Sexo", "Idade")
 g.set_titles("Classe {col_name}")
 
-# 4. Salvando o resultado final
-plt.savefig('graf3_4_variaveis.png', bbox_inches='tight')
-plt.close('all') # Limpa a memória para encerrar com segurança
+# Salvar
 
-print("\nSucesso absoluto! O gráfico final foi salvo como 'graf3_4_variaveis.png'")
+g.savefig('graf3_boxplot_4_variaveis.png', bbox_inches='tight')
+
+plt.close('all')
+print("\nSucesso! Tabela exibida no terminal e gráfico salvo como 'graf3_boxplot_4_variaveis.png'")
+
+
+
+
+
+
+
