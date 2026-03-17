@@ -99,9 +99,7 @@ print("\nSegundo gráfico gerado: 'graf2_sex_age_survived.png'")
 
 print("\nFase 5 - analise 4 variaveis - sex, age, class e survived- Boxplot - Outliers e tabela")
 
-
-
-#  Limpeza total
+#  Limpeza total, tenho tipo experiencias de naoo encerrar totlamente os gráficos, então para evitar qualquer tipo de confusão ou sobreposição, vou garantir que todos os gráficos sejam fechados antes de criar o próximo. Isso é especialmente importante quando se trabalha com múltiplos gráficos em sequência.
 import matplotlib.pyplot as plt
 import seaborn as sns
 plt.close('all')
@@ -118,7 +116,6 @@ print(tabela_4_variaveis)
 # Criar Gráfico 
 cores_status = {'Sobreviveu': 'green', 'Não Sobreviveu': 'red'}
 
-
 g = sns.catplot(
     x='Sex', 
     y='Age', 
@@ -132,7 +129,6 @@ g = sns.catplot(
     showfliers=True #  outliers 
 )
 
-
 g.figure.set_layout_engine('none') 
 
 # Títulos 
@@ -140,15 +136,45 @@ g.set_axis_labels("Sexo", "Idade")
 g.set_titles("Classe {col_name}")
 
 # Salvar
-
-g.savefig('graf3_boxplot_4_variaveis.png', bbox_inches='tight')
+g.savefig('graf3_surv_sex_age_class.png', bbox_inches='tight')
 
 plt.close('all')
-print("\nSucesso! Tabela exibida no terminal e gráfico salvo como 'graf3_boxplot_4_variaveis.png'")
+print("\nSucesso! Tabela exibida no terminal e gráfico salvo como 'graf3_sur_sex_age_class.png'")
 
+# Fase 6 -  analise de sobreviventes por embarque, classe e sexo
+print(" \nFase 6 - Análise por Porto de Embarque, Classe e Sexo")
 
+# Limpeza preventiva de fechamento de gráficos para evitar sobreposição
+plt.close('all')
 
+# Criando o gráfico 
+# contagem de sobreviventes (Survived) separada por Porto (col), Classe (row) e Sexo (hue)
+g = sns.catplot(
+    data=df,
+    x="Status", 
+    hue="Sex", 
+    col="Embarked", 
+    row="Pclass",
+    kind="count",
+    palette="viridis",
+    height=3, 
+    aspect=1.2
+)
 
+# títulos e eixos
+g.set_axis_labels("Resultado", "Nº de Passageiros")
+g.set_titles("Porto {col_name} | Classe {row_name}")
+
+# Salvar
+g.savefig('graf4_embarque_analise.png', bbox_inches='tight')
+
+# Tabela 
+print("\n--- Tabela: Sobrevivência por Porto e Classe ---")
+tabela_porto = df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean().unstack()
+print(tabela_porto)
+
+plt.close('all')
+print("\nGráfico 4 gerado com sucesso!")
 
 
 
