@@ -116,65 +116,91 @@ print(tabela_4_variaveis)
 # Criar Gráfico 
 cores_status = {'Sobreviveu': 'green', 'Não Sobreviveu': 'red'}
 
-g = sns.catplot(
-    x='Sex', 
-    y='Age', 
-    hue='Status', 
-    col='Pclass', 
-    data=df, 
-    kind='box', 
-    palette=cores_status,
-    height=4.5, 
-    aspect=0.8,
-    showfliers=True #  outliers 
-)
+# tabela dando erro na segunda utilização,criou a tabela mas nao roda novamente, optei por criar um outro grafico direto. 
+# #mantive o graf3 para comparacao com tabela
+# congelamento (o KeyboardInterrupt) no terminal.
+#g = sns.catplot(
+    #x='Sex', 
+    #y='Age', 
+    #hue='Status', 
+    #col='Pclass', 
+    #data=df, 
+    #kind='box', 
+    #palette=cores_status,
+    #height=4.5, 
+    #aspect=0.8,
+    #showfliers=True #  outliers 
+#)
 
-g.figure.set_layout_engine('none') 
+#g.figure.set_layout_engine('none') 
 
 # Títulos 
-g.set_axis_labels("Sexo", "Idade")
-g.set_titles("Classe {col_name}")
+#g.set_axis_labels("Sexo", "Idade")
+#g.set_titles("Classe {col_name}")
 
 # Salvar
-g.savefig('graf3_surv_sex_age_class.png', bbox_inches='tight')
+#g.savefig('graf3_surv_sex_age_class.png', bbox_inches='tight')
 
 plt.close('all')
 print("\nSucesso! Tabela exibida no terminal e gráfico salvo como 'graf3_sur_sex_age_class.png'")
 
+
 # Fase 6 -  analise de sobreviventes por embarque, classe e sexo
 print(" \nFase 6 - Análise por Porto de Embarque, Classe e Sexo")
 
-# Limpeza preventiva de fechamento de gráficos para evitar sobreposição
-plt.close('all')
 
-# Criando o gráfico 
-# contagem de sobreviventes (Survived) separada por Porto (col), Classe (row) e Sexo (hue)
-g = sns.catplot(
-    data=df,
-    x="Status", 
-    hue="Sex", 
-    col="Embarked", 
-    row="Pclass",
-    kind="count",
-    palette="viridis",
-    height=3, 
-    aspect=1.2
+# DADOS - aqui me dei conta que so havia calculado a taxa , achei importante ter numeros absolutos
+# taxa (%)
+resumo_pct = (df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean().unstack() * 100).round(1)
+# numero absolutos (nao existe meio sobrevivente) 
+resumo_qtd = df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].count().unstack()
+
+#  nova tabela que junta os dois valores como texto
+resumo_visual = resumo_pct.astype(str) + "% (" + resumo_qtd.astype(str) + ")"
+
+
+indices = []
+for porto, classe in resumo_visual.index:
+    nome_porto = {'C': 'Cherbourg', 'Q': 'Queenstown', 'S': 'Southampton'}.get(porto, porto)
+    indices.append(f"{nome_porto} (Cl {int(classe)})")
+
+resumo_visual.index = indices
+resumo_visual.columns = ['Mulheres', 'Homens']
+
+# Criar a tabela visual usando Matplotlib
+fig, ax = plt.subplots(figsize=(14, 7)) # Aumentei um pouco o tamanho para caber os textos
+ax.axis('off')
+
+# Cores
+cores_cabecalho = ['#2c3e50', '#2c3e50']
+cores_celulas = [['#ecf0f1', '#ecf0f1'], ['#ffffff', '#ffffff']] * 5
+
+tb = ax.table(
+    cellText=resumo_visual.values, 
+    rowLabels=resumo_visual.index, 
+    colLabels=resumo_visual.columns, 
+    cellLoc='center', 
+    loc='center',
+    colColours=cores_cabecalho,
+    cellColours=cores_celulas[:len(resumo_visual)]
 )
 
-# títulos e eixos
-g.set_axis_labels("Resultado", "Nº de Passageiros")
-g.set_titles("Porto {col_name} | Classe {row_name}")
+# AJUSTES 
+tb.auto_set_font_size(False)
+tb.set_fontsize(11)
+tb.scale(1.2, 2.8)
 
-# Salvar
-g.savefig('graf4_embarque_analise.png', bbox_inches='tight')
+for (row, col), cell in tb.get_celld().items(): # cabeçalho e os rótulos das linhas
+    if row == 0:# cabeçalho
+        cell.get_text().set_color('white')
+        cell.get_text().set_weight('bold')
+    if col == -1: # rótulos das linhas
+        cell.set_facecolor('#dfe6e9')
+        cell.get_text().set_weight('bold')
 
-# Tabela 
-print("\n--- Tabela: Sobrevivência por Porto e Classe ---")
-tabela_porto = df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean().unstack()
-print(tabela_porto)
-
+# Salvar fig e tabela
+plt.savefig('tabela_analise_porto_detalhada.png', bbox_inches='tight', dpi=200)
 plt.close('all')
-print("\nGráfico 4 gerado com sucesso!")
 
-
-
+print("\n✅ Tabela detalhada gerada com Sucesso!")
+print(resumo_visual)
