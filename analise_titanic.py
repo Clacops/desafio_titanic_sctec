@@ -6,9 +6,10 @@
 
 import pandas as pd
 import seaborn as sns
-#import numpy as np  programa não utilizou o numpy, então optei por retirar a importação para deixar o código mais limpo.
+#import numpy as np - programa não utilizou o numpy, então optei por retirar a importação para deixar o código mais limpo.
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg') # evita comp travar por loop de gráficos, e permite salvar os gráficos sem exibir janelas pop-up, 
+#o que é ideal para scripts que geram múltiplos gráficos em sequência.
 import matplotlib.pyplot as plt
 
 
