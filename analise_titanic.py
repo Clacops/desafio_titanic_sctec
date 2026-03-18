@@ -6,7 +6,7 @@
 
 import pandas as pd
 import seaborn as sns
-import numpy as np  
+#import numpy as np  programa não utilizou o numpy, então optei por retirar a importação para deixar o código mais limpo.
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -122,7 +122,7 @@ plt.savefig('graf1A_n.absoluto_taxa_sobreviventes_sexo_titanic.png', dpi=200)
 #mantive o grafico de taxa (%) pq ja estava pronto e foi aprendizado para este
 plt.close()
 
-print("\nFase 3 - Criando Tabela 2 e Gráfico 2 - Sobrevivência por Classe")
+print("\nFase 3 - Construindo Tabela 2 e Gráfico 2 - Sobrevivência por Classe")
 #  taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
 
 # sobreviventes / sex / taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
@@ -159,10 +159,8 @@ plt.close()
 
 print("\nSegundo gráfico gerado: 'graf2_sex_age_survived.png'")
 
-print("\nFase 4 - Análise 4 variáveis - sex, age, class e survived - tabela 3 e graf3 Boxplot - Outliers")
-
-
-print("\nGerando Gráfico 3 - Processamento Simplificado...")
+print("\nFase 4 - Construindo gráfico 3 - Sobrevivência por Sexo, Idade e Classe")
+# - Boxplot - Outliers
 
 cores_status = {'Sobreviveu': 'green', 'Não Sobreviveu': 'red'}
 if 'Status' not in df.columns:
@@ -185,69 +183,91 @@ g.savefig('graf3_surv_sex_age_class.png', dpi=100) # dpi menor para ser mais rá
 plt.close('all')
 print("Gráfico 3 salvo.")
 
+print("\nFase 5: Construindo tabela 4 - analise embarcados, sobreviventes, sex, age") # tabela_analise_porto_detalhada.png
+print("\nConstruindo Tabela 4")
 
-# Fase 5: tabela embarcados, sobreviventes, sex, age
-print("\nGerando Tabela Final - Processamento Rápido...")
-
+# Agruparl (sempre partindo do df para evitar erros de repetição)
 resumo_pct = (df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean().unstack() * 100).round(1)
 resumo_qtd = df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].count().unstack()
+
+# Criar a visualização dos dados (Taxa + Quantidade entre parênteses)
 resumo_visual = resumo_pct.astype(str) + "% (" + resumo_qtd.astype(str) + ")"
 
-# Ajuste simples de nomes
-indices = [f"{p} (Cl {int(c)})" for p, c in resumo_visual.index]
-resumo_visual.index = indices
-resumo_visual.columns = ['Mulheres', 'Homens']
+# transformar indices para nomes mais amigáveis
+novos_indices = []
+for porto, classe in resumo_visual.index:
+    nome_porto = {'C': 'Cherbourg', 'Q': 'Queenstown', 'S': 'Southampton'}.get(porto, porto)
+    novos_indices.append(f"Porto: {nome_porto} | Classe: {int(classe)}")
 
-# Criar a figura da tabela
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.axis('off')
+# Aplicar os novos nomes 
+resumo_visual.index = novos_indices
+resumo_visual.columns = ['Taxa Sobrev. Mulheres', 'Taxa Sobrev. Homens']
+resumo_visual.index.name = 'Origem e Categoria Social'
 
-# Criar a tabela
-tb = ax.table(
-    cellText=resumo_visual.values, 
-    rowLabels=resumo_visual.index, 
-    colLabels=resumo_visual.columns, 
-    cellLoc='center', loc='center'
-)
+# Exibir no terminal 
+print("\nTabela 4 Pronta:")
+print(resumo_visual)
 
-# Salvar a tabela como imagem 
-plt.savefig('tabela_analise_porto_detalhada.png', dpi=100)
+# --- FASE 5: CONSTRUINDO TABELA 4 (VERSÃO FINAL POLIDA) ---
+print("\nProcessando Tabela 4 - Ajustando nomes e visual...")
+
+# 1. Ajuste de nomes das colunas (O que faltava para o terminal)
+resumo_visual.columns = ['Taxa Sobrev. Mulheres', 'Taxa Sobrev. Homens']
+
+# 2. Criar os nomes dos portos e classes de forma limpa (Sem erro de Unpack)
+# Usamos o resumo_pct como base do loop porque ele ainda tem o formato original (Porto, Classe)
+novos_indices = []
+for porto, classe in resumo_pct.index: 
+    nome_porto = {'C': 'Cherbourg', 'Q': 'Queenstown', 'S': 'Southampton'}.get(porto, porto)
+    novos_indices.append(f"Porto: {nome_porto} | Classe: {int(classe)}")
+
+# Aplicar os novos nomes ao índice e definir o título da primeira coluna
+resumo_visual.index = novos_indices
+resumo_visual.index.name = 'Origem e Categoria Social'
+
+# 3. EXIBIR NO TERMINAL (Agora com títulos e nomes bonitos!)
+print("\n" + "="*60)
+print(resumo_visual)
+print("="*60)
+
+# 4. CRIAR A IMAGEM DA TABELA (Ajustada para não cortar nada)
 plt.close('all')
-
-# Criar a tabela visual usando Matplotlib
-fig, ax = plt.subplots(figsize=(14, 7)) # Aumentei um pouco o tamanho para caber os textos
+fig, ax = plt.subplots(figsize=(16, 10)) # Aumentamos o "papel" da imagem para caber tudo
 ax.axis('off')
 
-# Cores
-cores_cabecalho = ['#2c3e50', '#2c3e50']
-cores_celulas = [['#ecf0f1', '#ecf0f1'], ['#ffffff', '#ffffff']] * 5
-
+# Criar a tabela com as cores de cabeçalho profissionais
 tb = ax.table(
     cellText=resumo_visual.values, 
     rowLabels=resumo_visual.index, 
     colLabels=resumo_visual.columns, 
     cellLoc='center', 
     loc='center',
-    colColours=cores_cabecalho,
-    cellColours=cores_celulas[:len(resumo_visual)]
+    colColours=['#2c3e50', '#2c3e50'] # Azul escuro
 )
 
-# AJUSTES 
+# Estilização para ficar legível
 tb.auto_set_font_size(False)
 tb.set_fontsize(11)
-tb.scale(1.2, 2.8)
+tb.scale(1.2, 2.5) # Dá altura às linhas para o texto não ficar "espremido"
 
-for (row, col), cell in tb.get_celld().items(): # cabeçalho e os rótulos das linhas
-    if row == 0:# cabeçalho
+# Pintar o texto do cabeçalho de branco e colocar negrito
+for (row, col), cell in tb.get_celld().items():
+    if row == 0: # Cabeçalho
         cell.get_text().set_color('white')
         cell.get_text().set_weight('bold')
-    if col == -1: # rótulos das linhas
-        cell.set_facecolor('#dfe6e9')
+    if col == -1: # Nomes das linhas (Portos/Classes)
         cell.get_text().set_weight('bold')
+        cell.set_facecolor('#ffffff') # Fundo branco para garantir leitura
 
-# Salvar fig e tabela
-plt.savefig('tabela_analise_porto_detalhada.png', bbox_inches='tight', dpi=200)
+# --- O SEGREDO: Margens para o texto não bater na borda ---
+plt.subplots_adjust(left=0.25, right=0.9, top=0.9, bottom=0.1)
+
+# 5. SALVAMENTO FINAL
+plt.savefig('tabela4_analise_porto_detalhada.png', dpi=150)
 plt.close('all')
 
-print("\nPROJETO FINALIZADO COM SUCESSO!")
-print(resumo_visual)
+print("\n✅ PROJETO FINALIZADO COM SUCESSO! Verifique os arquivos .png na sua pasta.")
+
+
+
+
