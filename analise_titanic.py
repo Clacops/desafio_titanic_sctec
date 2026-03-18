@@ -1,57 +1,86 @@
-# Utilizar o venv : "pip install numpy pandas matplotlib seaborn" e ja deixei pronto o seaborn isnatalado tambem
-# Erro: desinstalar tudo e reinstalar tudo de novo, "pip uninstall pandas numpy -" "pip cache purge" reinstalar do zero.
-import pandas as pd
+# criar ambiente virtual : python- m venv venv
+# ativar o ambiennte (Windows) : .\venv\Scripts\activate
+# instalar bibliotecas : "pip install numpy pandas matplotlib seaborn" e ja deixei pronto o seaborn instalado tambem
+# Foi necessario - Erro: desinstalar tudo e reinstalar tudo de novo,
+# pip uninstall pandas numpy  - pip cache purge reinstalar do zero.
 
-#import matplotlib
+import pandas as pd
+import seaborn as sns
+import numpy as np  
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+
 print("Fase 1 - Tratamento dos Dados")
-# dataset
+ 
+# buscando o dataset no Drive, e lendo o arquivo CSV
 df = pd.read_csv('titanic_dataset.csv')
 
-# Exibindo as primeiras linhas e o resumo estrutural 
+# Exibir as primeiras 5 linhas e o resumo estrutural 
 print("Visualização inicial dos dados:")
-print(df.head())
+print(df.head()) 
 
 print("\nVerificação de tipos e nulos:")
-print(df.info())
+print(df.info()) #estrutura dataset, tipos de dados e contagem de nulos por coluna
+#aqui percebi que a coluna 'Cabin' tem muitos nulos, e a coluna 'Age' tem 177 nulos, e 'Embarked' tem 2 nulos.
 
 # iniciando a retirada dos nulls
-# quantidade de nulos por coluna
+
 print("\nValores nulos por coluna antes do tratamento:")
 print(df.isnull().sum())
 
 # Tratando a coluna 'Age' (Idade)
 # preencher as idades faltantes com a mediana 
-df['Age'] = df['Age'].fillna(df['Age'].median())
+df['Age'] = df['Age'].fillna(df['Age'].median()) 
+# manter as 177 idades faltantes com a utilização da mediana para evitar distorção causada por outliers
+# valores muitos extremos estarao fora da distribuição, mais realista possível.
 
-#Tratando a coluna 'Embarked' (Embarque)
-# Vamos preencher com o porto mais frequente (moda)
+# Tratando a coluna 'Embarked' (Embarque)
+# preencher com o porto mais frequente (moda)
 porto_frequente = df['Embarked'].mode()[0]
 df['Embarked'] = df['Embarked'].fillna(porto_frequente)
 
-# Removendo duplicatas - importante!
+# Removendo duplicatas - registro unicos -importante
 df = df.drop_duplicates()
 
-# obtive a coluna cabin com muitos nulos = 687, cosniderando que nao possuo os dados optei por preencher os nulos da cabine com uma categoria genérica
+# obtive a coluna cabin com muitos nulos = 687, cosniderando que nao possuo os dados,
+# optei por preencher os nulos da cabine com uma categoria genérica de "Unknown" - nao diminuir a amostra 
 df['Cabin'] = df['Cabin'].fillna('Unknown')
 
 print(df.isnull().sum())
 
-print("\nFase 2 - Construindo o primeiro Grafico ")
-import matplotlib.pyplot as plt
-import seaborn as sns
+# importando bibliotecas
 
+print("\nFase 2 - Construindo a Tabela 1 e Primeiro  Gráfico ") #age e survivers em taxas % e ns absolutos
+print ("\nMédia de sobrevivência por sexo: Números Absolutos e Percentuais")
+
+
+#print(df.groupby('Sex')['Survived'].mean()) optei por utilizar numeros absultos e taxa na mesma tabela
+
+# Agrupar 'Sex' / contagem total e a média de sobrevivência relacao entre toral masculino e feminino prorporcional a sobreviventes
+tabela_sexo = df.groupby('Sex')['Survived'].agg(['count', 'sum', 'mean']) # acrescentado agg pois travando muito o código, e com agg ficou 
+#mais fluida a execução, e consegui calcular as 3 métricas em um único passo.
+
+tabela_sexo.columns = ['Total Passageiros', 'Total Sobreviventes', 'Taxa de Sobrevivência']
+
+tabela_sexo['Taxa de Sobrevivência'] = tabela_sexo['Taxa de Sobrevivência'] * 100 # ajustar casas decimais
+
+print("Tabela 1: Sobrevivência por Sexo")
+print(tabela_sexo)
+
+#criando o grafico de barras
 #  estilo do gráfico
-sns.set_theme(style="whitegrid")
+sns.set_theme(style="whitegrid") 
 
 # personalizadando as cores para cada sexo
 cores_sexo = {'female': 'red', 'male': 'blue'}
 
-# Versão atualizada para evitar o Warning
+# Versão atualizada seaborn q solicita o hue para evitar o Warning  (depois de muitos warnings!!!)
+# hue para diferenciar as barras por sexo,  legend=False para evitar legenda redundante.
 sns.barplot(x='Sex', y='Survived', data=df, hue='Sex', palette=cores_sexo, legend=False)
 
-#títulos e rótulos
+#títulos e rótulos 
 plt.title('Taxa de Sobrevivência por Sexo - Desafio Titanic 2026')
 plt.xlabel('Sexo (Feminino vs Masculino)')
 plt.ylabel('Proporção de Sobreviventes')
@@ -61,28 +90,60 @@ plt.savefig('graf1_sobrevivencia_sexo.png')
 plt.close() 
 # retirei o plt.show() para evitar que o gráfico seja exibido em janelas pop-up, e fica aparecendo warning de loop.
 
-print ("\nFase 3 - análise dos resultados ")
-print("\nMédia de sobrevivência por sexo:")
-print(df.groupby('Sex')['Survived'].mean())
+# Percebi que poderia ser visualemtne melhor utiizar taxas e dados absolutos no grafico - graf1A unificado
 
+plt.figure(figsize=(8, 6))
+
+# gráfico de barras (que mostra a média/taxa de sobrevivência)
+ax = sns.barplot(x='Sex', y='Survived', data=df, hue='Sex', palette=cores_sexo, legend=False)
+
+#  valores absolutos para colocar no topo das barras
+# sobreviventes em cada grupo / contagem /sex/survived
+contagem = df[df['Survived'] == 1]['Sex'].value_counts()
+
+# rótulos (Texto) no topo de cada barra
+for i, p in enumerate(ax.patches): # condicional enumerate = iterar sobre as barras do gráfico
+    # nome do sexo baseado na posição da barra
+    sexo = 'female' if i == 0 else 'male' 
+    qtd = contagem[sexo]
+    porcentagem = p.get_height() * 100
+    
+    # "Qtd Sobreviventes (Porcentagem%)"
+    ax.annotate(f'{qtd} vivas ({porcentagem:.1f}%)', #uma casa decimal
+                (p.get_x() + p.get_width() / 2., p.get_height()), # coordenadas altura e largura da barra
+                ha='center', va='baseline', 
+                fontsize=11, fontweight='bold', color='black', xytext=(0, 14), 
+                textcoords='offset points')
+
+plt.title('Análise de Sobrevivência: Total Absoluto e Taxa Relativa por Sexo')
+plt.ylabel('Taxa de Sobrevivência (0.0 a 1.0)')
+plt.ylim(0, 1.1) 
+plt.savefig('graf1A_n.absoluto_taxa_sobreviventes_sexo_titanic.png', dpi=200) 
+#mantive o grafico de taxa (%) pq ja estava pronto e foi aprendizado para este
+plt.close()
+
+print("\nFase 3 - Criando Tabela 2 e Gráfico 2 - Sobrevivência por Classe")
 #  taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
-print("\nTaxa de Sobrevivência por Classe:")
-print(df.groupby('Pclass')['Survived'].mean())
 
-# sobreviventes X sex X taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
+# sobreviventes / sex / taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
+tabela_classe = df.groupby('Pclass')['Survived'].agg(['count', 'sum', 'mean'])
 
-print("\n*Analise relação sex,age e survided*")
-print("\nSobrevivência por Sexo e Classe ")
-analise_sex_age_survived = df.groupby(['Sex', 'Pclass'])['Survived'].mean()
-print(analise_sex_age_survived)
+# Renomear as colunas 
+tabela_classe.columns = ['Total Passageiros', 'Total Sobreviventes', 'Taxa de Sobrevivência (%)']
 
-print("\nFase 4  - Grafico 2  - com 3 variaveis")
+# Convertendo a média para porcentagem com uma casa decimal
+tabela_classe['Taxa de Sobrevivência (%)'] = (tabela_classe['Taxa de Sobrevivência (%)'] * 100).round(1)
 
+# garantir que a 1ª classe apareça no topo
+tabela_classe = tabela_classe.sort_index()
+
+print("\nTabela 2: Análise de Sobrevivência por Classe Social")
+print(tabela_classe)
 
 # personalizar cores para sobrevivência
 cores_sobrevivencia = {0: 'red', 1: 'green'}
 
-# Criar figura e o gráfico
+# Criar figura e o gráficopython- m venv venv
 plt.figure(figsize=(10, 6))
 sns.boxplot(x='Survived', y='Age', hue='Sex', data=df, palette=cores_sexo)
 
@@ -94,78 +155,64 @@ plt.legend(title='Sexo')
 # Salvar 
 plt.savefig('graf2_sex_age_survived.png')
 plt.close() 
+#  Limpeza total, tenho tipo experiencias de nao encerrar totlamente os gráficos, então para evitar qualquer tipo de confusão ou sobreposição, vou garantir que todos os gráficos sejam fechados antes de criar o próximo. Isso é especialmente importante quando se trabalha com múltiplos gráficos em sequência.
+
 print("\nSegundo gráfico gerado: 'graf2_sex_age_survived.png'")
 
-
-print("\nFase 5 - analise 4 variaveis - sex, age, class e survived- Boxplot - Outliers e tabela")
-
-#  Limpeza total, tenho tipo experiencias de naoo encerrar totlamente os gráficos, então para evitar qualquer tipo de confusão ou sobreposição, vou garantir que todos os gráficos sejam fechados antes de criar o próximo. Isso é especialmente importante quando se trabalha com múltiplos gráficos em sequência.
-import matplotlib.pyplot as plt
-import seaborn as sns
-plt.close('all')
-
-# Tabela 
-print("\n--- Tabela sobreviventes: Idade Média por Classe, Sexo e Status ---")
-
-df['Status'] = df['Survived'].map({0: 'Não Sobreviveu', 1: 'Sobreviveu'})
+print("\nFase 4 - Análise 4 variáveis - sex, age, class e survived - tabela 3 e graf3 Boxplot - Outliers")
 
 
-tabela_4_variaveis = df.groupby(['Pclass', 'Sex', 'Status'])['Age'].mean().unstack()
-print(tabela_4_variaveis)
+print("\nGerando Gráfico 3 - Processamento Simplificado...")
 
-# Criar Gráfico 
 cores_status = {'Sobreviveu': 'green', 'Não Sobreviveu': 'red'}
-
-# tabela dando erro na segunda utilização,criou a tabela mas nao roda novamente, optei por criar um outro grafico direto. 
-# #mantive o graf3 para comparacao com tabela
-# congelamento (o KeyboardInterrupt) no terminal.
-#g = sns.catplot(
-    #x='Sex', 
-    #y='Age', 
-    #hue='Status', 
-    #col='Pclass', 
-    #data=df, 
-    #kind='box', 
-    #palette=cores_status,
-    #height=4.5, 
-    #aspect=0.8,
-    #showfliers=True #  outliers 
-#)
-
-#g.figure.set_layout_engine('none') 
-
-# Títulos 
-#g.set_axis_labels("Sexo", "Idade")
-#g.set_titles("Classe {col_name}")
-
-# Salvar
-#g.savefig('graf3_surv_sex_age_class.png', bbox_inches='tight')
+if 'Status' not in df.columns:
+    df['Status'] = df['Survived'].map({0: 'Não Sobreviveu', 1: 'Sobreviveu'})
 
 plt.close('all')
-print("\nSucesso! Tabela exibida no terminal e gráfico salvo como 'graf3_sur_sex_age_class.png'")
+
+# criar grafico 3
+g = sns.catplot(
+    x='Sex', y='Age', hue='Status', col='Pclass', 
+    data=df, kind='box', palette=cores_status,
+    height=4, aspect=0.7, showfliers=True
+)
+
+# bloquear calc layout (Isso evita o travamento)
+g.figure.set_layout_engine(None) 
+
+# ajustes para grafico3 - sem bordas - sem o bbox_inches)
+g.savefig('graf3_surv_sex_age_class.png', dpi=100) # dpi menor para ser mais rápido
+plt.close('all')
+print("Gráfico 3 salvo.")
 
 
-# Fase 6 -  analise de sobreviventes por embarque, classe e sexo
-print(" \nFase 6 - Análise por Porto de Embarque, Classe e Sexo")
+# Fase 5: tabela embarcados, sobreviventes, sex, age
+print("\nGerando Tabela Final - Processamento Rápido...")
 
-
-# DADOS - aqui me dei conta que so havia calculado a taxa , achei importante ter numeros absolutos
-# taxa (%)
 resumo_pct = (df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean().unstack() * 100).round(1)
-# numero absolutos (nao existe meio sobrevivente) 
 resumo_qtd = df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].count().unstack()
-
-#  nova tabela que junta os dois valores como texto
 resumo_visual = resumo_pct.astype(str) + "% (" + resumo_qtd.astype(str) + ")"
 
-
-indices = []
-for porto, classe in resumo_visual.index:
-    nome_porto = {'C': 'Cherbourg', 'Q': 'Queenstown', 'S': 'Southampton'}.get(porto, porto)
-    indices.append(f"{nome_porto} (Cl {int(classe)})")
-
+# Ajuste simples de nomes
+indices = [f"{p} (Cl {int(c)})" for p, c in resumo_visual.index]
 resumo_visual.index = indices
 resumo_visual.columns = ['Mulheres', 'Homens']
+
+# Criar a figura da tabela
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.axis('off')
+
+# Criar a tabela
+tb = ax.table(
+    cellText=resumo_visual.values, 
+    rowLabels=resumo_visual.index, 
+    colLabels=resumo_visual.columns, 
+    cellLoc='center', loc='center'
+)
+
+# Salvar a tabela como imagem 
+plt.savefig('tabela_analise_porto_detalhada.png', dpi=100)
+plt.close('all')
 
 # Criar a tabela visual usando Matplotlib
 fig, ax = plt.subplots(figsize=(14, 7)) # Aumentei um pouco o tamanho para caber os textos
@@ -202,5 +249,5 @@ for (row, col), cell in tb.get_celld().items(): # cabeçalho e os rótulos das l
 plt.savefig('tabela_analise_porto_detalhada.png', bbox_inches='tight', dpi=200)
 plt.close('all')
 
-print("\n✅ Tabela detalhada gerada com Sucesso!")
+print("\nPROJETO FINALIZADO COM SUCESSO!")
 print(resumo_visual)
