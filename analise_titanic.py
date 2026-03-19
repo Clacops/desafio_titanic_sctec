@@ -22,14 +22,17 @@ df = pd.read_csv('titanic_dataset.csv')
 print("Visualização inicial dos dados:")
 print(df.head()) 
 
+
 print("\nVerificação de tipos e nulos:")
 print(df.info()) #estrutura dataset, tipos de dados e contagem de nulos por coluna
 #aqui percebi que a coluna 'Cabin' tem muitos nulos, e a coluna 'Age' tem 177 nulos, e 'Embarked' tem 2 nulos.
 
 # iniciando a retirada dos nulls
 
-print("\nValores nulos por coluna antes do tratamento:")
+print("\nTabela 1 - Valores nulos por coluna antes do tratamento:")
+print("="*80)
 print(df.isnull().sum())
+
 
 # Tratando a coluna 'Age' (Idade)
 # preencher as idades faltantes com a mediana 
@@ -49,11 +52,12 @@ df = df.drop_duplicates()
 # optei por preencher os nulos da cabine com uma categoria genérica de "Unknown" - nao diminuir a amostra 
 df['Cabin'] = df['Cabin'].fillna('Unknown')
 
+print("\n" + "="*80)
+print("\nTabela 2 - Confirmação de nulos")
 print(df.isnull().sum())
+print("\n" + "="*80)
 
-# importando bibliotecas
-
-print("\nFase 2 - Construindo a Tabela 1 e Primeiro  Gráfico ") #age e survivers em taxas % e ns absolutos
+print("\nFase 2 - Construindo a Tabela 3 e Primeiro Gráfico ") #age e survivers em taxas % e ns absolutos
 print ("\nMédia de sobrevivência por sexo: Números Absolutos e Percentuais")
 
 
@@ -67,8 +71,9 @@ tabela_sexo.columns = ['Total Passageiros', 'Total Sobreviventes', 'Taxa de Sobr
 
 tabela_sexo['Taxa de Sobrevivência'] = tabela_sexo['Taxa de Sobrevivência'] * 100 # ajustar casas decimais
 
-print("Tabela 1: Sobrevivência por Sexo")
+print("Tabela 3: Sobrevivência por Sexo")
 print(tabela_sexo)
+print("\n" + "="*80)
 
 #criando o grafico de barras
 #  estilo do gráfico
@@ -87,12 +92,11 @@ plt.xlabel('Sexo (Feminino vs Masculino)')
 plt.ylabel('Proporção de Sobreviventes')
 
 # Salvar como imagem 
-plt.savefig('graf1_sobrevivencia_sexo.png')
+plt.savefig('graf1_taxa_sobrevivencia_sexo.png')
 plt.close() 
 # retirei o plt.show() para evitar que o gráfico seja exibido em janelas pop-up, e fica aparecendo warning de loop.
 
-# Percebi que poderia ser visualemtne melhor utiizar taxas e dados absolutos no grafico - graf1A unificado
-
+# Percebi que poderia ser visualemtne melhor utiizar taxas + dados absolutos no grafico - graf1A o
 plt.figure(figsize=(8, 6))
 
 # gráfico de barras (que mostra a média/taxa de sobrevivência)
@@ -119,11 +123,11 @@ for i, p in enumerate(ax.patches): # condicional enumerate = iterar sobre as bar
 plt.title('Análise de Sobrevivência: Total Absoluto e Taxa Relativa por Sexo')
 plt.ylabel('Taxa de Sobrevivência (0.0 a 1.0)')
 plt.ylim(0, 1.1) 
-plt.savefig('graf1A_n.absoluto_taxa_sobreviventes_sexo_titanic.png', dpi=200) 
+plt.savefig('graf1A_n.absoluto_taxa_sobreviventes_sexo.png', dpi=200) 
 #mantive o grafico de taxa (%) pq ja estava pronto e foi aprendizado para este
 plt.close()
 
-print("\nFase 3 - Construindo Tabela 2 e Gráfico 2 - Sobrevivência por Classe")
+print("\nFase 3 - Construindo Tabela 4 e Gráfico 2 - Sobrevivência por Classe")
 #  taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
 
 # sobreviventes / sex / taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
@@ -138,8 +142,10 @@ tabela_classe['Taxa de Sobrevivência (%)'] = (tabela_classe['Taxa de Sobrevivê
 # garantir que a 1ª classe apareça no topo
 tabela_classe = tabela_classe.sort_index()
 
-print("\nTabela 2: Análise de Sobrevivência por Classe Social")
+print("\nTabela 4: Análise de Sobrevivência por Classe Social")
+print("\n" + "="*80)
 print(tabela_classe)
+print("\n" + "="*80)
 
 # personalizar cores para sobrevivência
 cores_sobrevivencia = {0: 'red', 1: 'green'}
@@ -162,7 +168,6 @@ print("\nSegundo gráfico gerado: 'graf2_sex_age_survived.png'")
 
 print("\nFase 4 - Construindo gráfico 3 - Sobrevivência por Sexo, Idade e Classe")
 # - Boxplot - Outliers
-
 cores_status = {'Sobreviveu': 'green', 'Não Sobreviveu': 'red'}
 if 'Status' not in df.columns:
     df['Status'] = df['Survived'].map({0: 'Não Sobreviveu', 1: 'Sobreviveu'})
@@ -183,9 +188,9 @@ g.figure.set_layout_engine(None)
 g.savefig('graf3_surv_sex_age_class.png', dpi=100) # dpi menor para ser mais rápido
 plt.close('all')
 print("Gráfico 3 salvo.")
+print("="*80)
 
-print("\nFase 5: Construindo tabela 4 - analise embarcados, sobreviventes, sex, age") # tabela_analise_porto_detalhada.png
-print("\nConstruindo Tabela 4")
+print("\nFase 5: Construindo tabela 5 - analise embarcados, sobreviventes, sex, age") # tabela_analise_porto_detalhada.png
 
 # Agruparl (sempre partindo do df para evitar erros de repetição)
 resumo_pct = (df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean().unstack() * 100).round(1)
@@ -206,32 +211,28 @@ resumo_visual.columns = ['Taxa Sobrev. Mulheres', 'Taxa Sobrev. Homens']
 resumo_visual.index.name = 'Origem e Categoria Social'
 
 # Exibir no terminal 
-print("\nTabela 4 Pronta:")
-print(resumo_visual)
-
-# --- FASE 5: CONSTRUINDO TABELA 4 (VERSÃO FINAL POLIDA) ---
-print("\nProcessando Tabela 4 - Ajustando nomes e visual...")
-
-# 1. Ajuste de nomes das colunas (O que faltava para o terminal)
+print("\nTabela 5 - análise embarcados, sobreviventes, sex, age")
+#print(resumo_visual)
+#nomes das colunas - faltava para o terminal
 resumo_visual.columns = ['Taxa Sobrev. Mulheres', 'Taxa Sobrev. Homens']
 
-# 2. Criar os nomes dos portos e classes de forma limpa (Sem erro de Unpack)
-# Usamos o resumo_pct como base do loop porque ele ainda tem o formato original (Porto, Classe)
+# nomes dos portos e classes 
+
 novos_indices = []
 for porto, classe in resumo_pct.index: 
     nome_porto = {'C': 'Cherbourg', 'Q': 'Queenstown', 'S': 'Southampton'}.get(porto, porto)
     novos_indices.append(f"Porto: {nome_porto} | Classe: {int(classe)}")
 
-# Aplicar os novos nomes ao índice e definir o título da primeira coluna
+# Aplicar nomes ao índice e  título da primeira coluna
 resumo_visual.index = novos_indices
 resumo_visual.index.name = 'Origem e Categoria Social'
 
-# 3. EXIBIR NO TERMINAL (Agora com títulos e nomes bonitos!)
-print("\n" + "="*60)
+# exibir tabela
+print( "="*80)
 print(resumo_visual)
-print("="*60)
+print("\n" + "="*80)
+# criar imagem tabela
 
-# 4. CRIAR A IMAGEM DA TABELA (Ajustada para não cortar nada)
 plt.close('all')
 fig, ax = plt.subplots(figsize=(16, 10)) # Aumentamos o "papel" da imagem para caber tudo
 ax.axis('off')
@@ -260,10 +261,9 @@ for (row, col), cell in tb.get_celld().items():
         cell.get_text().set_weight('bold')
         cell.set_facecolor('#ffffff') # Fundo branco para garantir leitura
 
-# --- O SEGREDO: Margens para o texto não bater na borda ---
 plt.subplots_adjust(left=0.25, right=0.9, top=0.9, bottom=0.1)
 
-# 5. SALVAMENTO FINAL
+# salvar
 plt.savefig('tabela4_analise_porto_detalhada.png', dpi=150)
 plt.close('all')
 
