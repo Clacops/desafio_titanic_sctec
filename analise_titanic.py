@@ -30,7 +30,7 @@ print(df.info()) #estrutura dataset, tipos de dados e contagem de nulos por colu
 # iniciando a retirada dos nulls
 
 print("\nTabela 1 - Valores nulos por coluna antes do tratamento:")
-print("="*80)
+print("="*90)
 print(df.isnull().sum())
 
 
@@ -46,20 +46,18 @@ porto_frequente = df['Embarked'].mode()[0]
 df['Embarked'] = df['Embarked'].fillna(porto_frequente)
 
 # Removendo duplicatas - registro unicos -importante
-df = df.drop_duplicates()
+#df = df.drop_duplicates()
 
 # obtive a coluna cabin com muitos nulos = 687, cosniderando que nao possuo os dados,
 # optei por preencher os nulos da cabine com uma categoria genérica de "Unknown" - nao diminuir a amostra 
 df['Cabin'] = df['Cabin'].fillna('Unknown')
 
-print("\n" + "="*80)
+print("\n" + "="*90)
 print("\nTabela 2 - Confirmação de nulos")
 print(df.isnull().sum())
-print("\n" + "="*80)
+print("\n" + "="*90)
 
-print("\nFase 2 - Construindo a Tabela 3 e Primeiro Gráfico ") #age e survivers em taxas % e ns absolutos
-
-
+print("\nFase 2 - Construindo a Tabela 3 e  Primeiros Gráficos ") #age e survivers em taxas % e ns absolutos
 
 #print(df.groupby('Sex')['Survived'].mean()) optei por utilizar numeros absultos e taxa na mesma tabela
 
@@ -75,7 +73,7 @@ print("Tabela 3: Sobrevivência por Sexo")
 print ("Média de sobrevivência por sexo: Números Absolutos e Percentuais")
 
 print(tabela_sexo)
-print("\n" + "="*80)
+print("\n" + "="*90)
 
 #criando o grafico de barras
 #  estilo do gráfico
@@ -94,7 +92,7 @@ plt.xlabel('Sexo (Feminino vs Masculino)')
 plt.ylabel('Proporção de Sobreviventes')
 
 # Salvar como imagem 
-plt.savefig('graf1_taxa_sobrevivencia_sexo.png')
+plt.savefig('graf1_taxa_sobreviventes_sexo.png')
 plt.close() 
 # retirei o plt.show() para evitar que o gráfico seja exibido em janelas pop-up, e fica aparecendo warning de loop.
 
@@ -106,31 +104,75 @@ ax = sns.barplot(x='Sex', y='Survived', data=df, hue='Sex', palette=cores_sexo, 
 
 #  valores absolutos para colocar no topo das barras
 # sobreviventes em cada grupo / contagem /sex/survived
-contagem = df[df['Survived'] == 1]['Sex'].value_counts()
 
-# rótulos (Texto) no topo de cada barra
-for i, p in enumerate(ax.patches): # condicional enumerate = iterar sobre as barras do gráfico
-    # nome do sexo baseado na posição da barra
-    sexo = 'female' if i == 0 else 'male' 
-    qtd = contagem[sexo]
+# Percebi que poderia ser visualemtne melhor utiizar taxas + dados absolutos no grafico - graf1A o
+plt.figure(figsize=(8, 6))
+
+# gráfico de barras (que mostra a média/taxa de sobrevivência)
+ax = sns.barplot(x='Sex', y='Survived', data=df, hue='Sex', palette=cores_sexo, legend=False)
+
+# valores absolutos para colocar no topo das barras
+# sobreviventes em cada grupo / contagem /sex/survived
+
+# CCORREÇÂO!!! grafico com valores invertidos female/male, entao para garantir que 
+# os valores absolutos correspondam a barra correta, utilizei o método value_counts() filtrando apenas os sobreviventes (Survived == 1) e contando por sexo. Assim, a contagem de #
+# sobreviventes para cada sexo estará na ordem correta para ser associada às barras do gráfico.
+contagem_sobreviventes = df[df['Survived'] == 1]['Sex'].value_counts()
+
+# ordem exata das categorias que o Seaborn usou no eixo X
+# ax.get_xticklabels() retorna objetos de texto, usamos .get_text() para pegar a string ('male', 'female')
+ordem_categorias = [label.get_text() for label in ax.get_xticklabels()]
+
+# Iterar sobre as barras E a ordem ao mesmo tempo usando zip
+# ax.patches contém os retângulos (barras) na ordem do desenho
+for p, sexo_barra in zip(ax.patches, ordem_categorias):
+    
+    # quantidade correta baseada no sexo que corresponde a ESTA barra
+    qtd = contagem_sobreviventes[sexo_barra]
+    
+    # Pegar a porcentagem (altura da barra * 100)
     porcentagem = p.get_height() * 100
     
-    # "Qtd Sobreviventes (Porcentagem%)"
-    ax.annotate(f'{qtd} vivas ({porcentagem:.1f}%)', #uma casa decimal
-                (p.get_x() + p.get_width() / 2., p.get_height()), # coordenadas altura e largura da barra
-                ha='center', va='baseline', 
-                fontsize=11, fontweight='bold', color='black', xytext=(0, 14), 
-                textcoords='offset points')
+    # Criar o rótulo "Qtd vivos (Porcentagem%)"
+    # f-string para formatar (:.1f para uma casa decimal)
+    rotulo_texto = f'{qtd} vivos ({porcentagem:.1f}%)'
+    
+    # Adicionar o texto (rótulo) no topo de cada barra
+    ax.annotate(rotulo_texto, 
+                # Coordenadas: (meio da largura da barra, altura da barra)
+                (p.get_x() + p.get_width() / 2., p.get_height()), 
+                ha='center',       # Alinhamento horizontal: centro
+                va='baseline',     # Alinhamento vertical: base
+                fontsize=11, fontweight='bold', color='black', 
+                xytext=(0, 14),    # Afastar 14 pontos para cima (y)
+                textcoords='offset points') # Usar pontos como referência de afastamento
 
 plt.title('Análise de Sobrevivência: Total Absoluto e Taxa Relativa por Sexo')
 plt.ylabel('Taxa de Sobrevivência (0.0 a 1.0)')
 plt.ylim(0, 1.1) 
 plt.savefig('graf1A_n.absoluto_taxa_sobreviventes_sexo.png', dpi=200) 
-#mantive o grafico de taxa (%) pq ja estava pronto e foi aprendizado para este
 plt.close()
 
-print("\nFase 3 - Construindo Tabela 4 e Gráfico 2 - Sobrevivência por Classe")
+print("\nTabela 4: Estatísticas de Idade por Sobrevivência e Sexo")
+
+# Gerando média, mediana, mínimo e máximo de idade para cada grupo
+tabela_idade_stats = df.groupby(['Survived', 'Sex'])['Age'].agg(['mean', 'median', 'min', 'max']).round(1)
+
+# Renomeando as colunas para o português
+tabela_idade_stats.columns = ['Média de Idade', 'Mediana', 'Idade Mín.', 'Idade Máx.']
+
+# Ajustando o índice para ficar legível
+tabela_idade_stats.index = [
+    ('Não Sobreviveu', 'Feminino'), ('Não Sobreviveu', 'Masculino'),
+    ('Sobreviveu', 'Feminino'), ('Sobreviveu', 'Masculino')
+]
+
+print(tabela_idade_stats)
+print("="*90)   
+
+print("\nFase 3 - Construindo Tabela 5 e Gráfico 2 - Sobrevivência por Classe")
 #  taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
+
 
 # sobreviventes / sex / taxa de sobrevivência por Classe (1ª, 2ª e 3ª)
 tabela_classe = df.groupby('Pclass')['Survived'].agg(['count', 'sum', 'mean'])
@@ -144,10 +186,10 @@ tabela_classe['Taxa de Sobrevivência (%)'] = (tabela_classe['Taxa de Sobrevivê
 # garantir que a 1ª classe apareça no topo
 tabela_classe = tabela_classe.sort_index()
 
-print("\nTabela 4: Análise de Sobrevivência por Classe Social")
+print("\nTabela 5: Análise de Sobrevivência por Classe Social")
 
 print(tabela_classe)
-print("\n" + "="*80)
+print("\n" + "="*90)
 
 # personalizar cores para sobrevivência
 cores_sobrevivencia = {0: 'red', 1: 'green'}
@@ -161,13 +203,15 @@ plt.xlabel('Sobreviveu (0 = Não, 1 = Sim)')
 plt.ylabel('Idade')
 plt.legend(title='Sexo')
 
+
+
 # Salvar 
 plt.savefig('graf2_sex_age_survived.png')
 plt.close() 
 #  Limpeza total, tenho tipo experiencias de nao encerrar totlamente os gráficos, então para evitar qualquer tipo de confusão ou sobreposição, vou garantir que todos os gráficos sejam fechados antes de criar o próximo. Isso é especialmente importante quando se trabalha com múltiplos gráficos em sequência.
 
 print("\nSegundo gráfico gerado: 'graf2_sex_age_survived.png'")
-print("\n" + "="*80)
+print('\n' + "="*90)
 
 print("\nFase 4 - Construindo gráfico 3 - Sobrevivência por Sexo, Idade e Classe")
 # - Boxplot - Outliers
@@ -191,87 +235,117 @@ g.figure.set_layout_engine(None)
 g.savefig('graf3_surv_sex_age_class.png', dpi=100) # dpi menor para ser mais rápido
 plt.close('all')
 print("Gráfico 3 salvo.")
-print("="*80)
+print("="*90)
 
-print("\nFase 5: Construindo tabela 5 - analise embarcados, classe, sobreviventes, sex, age") # tabela_analise_porto_detalhada.png
+# Teste: Mediana apenas de quem já tinha idade preenchida no CSV todas estao iguais a 28 e sugere que a adequacao nos 20% (177)
+#print(df.dropna(subset=['Age']).groupby(['Survived', 'Sex'])['Age'].median())
 
-# Agrupar (sempre partindo do df para evitar erros de repetição)
-resumo_pct = (df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean().unstack() * 100).round(1)
-resumo_qtd = df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].count().unstack()
+print("\nFase 5: Construindo Tabela 6 - analise embarcados, classe, sobreviventes, sex, age") # tabela_analise_porto_detalhada.png
 
-# Criar a visualização dos dados (Taxa + Quantidade entre parênteses)
-resumo_visual = resumo_pct.astype(str) + "% (" + resumo_qtd.astype(str) + ")"
+print("\n Tabela 6 - analise embarcados, classe, sobreviventes, sex")
 
-# transformar indices para nomes mais amigáveis
+#Agrupar Base (Médias e Somas)
+resumo_pct = (df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean() * 100).unstack()
+resumo_sobreviventes = df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].sum().unstack()
+
+total_qtd_mulheres = resumo_sobreviventes['female'].sum()
+total_qtd_homens = resumo_sobreviventes['male'].sum()
+
+# Média ponderada real do que está exibido
+total_pct_mulheres = (total_qtd_mulheres / df[df['Sex'] == 'female']['PassengerId'].count()) * 100
+total_pct_homens = (total_qtd_homens / df[df['Sex'] == 'male']['PassengerId'].count()) * 100
+
+# Inseri a linha de Total Geral
+resumo_pct.loc[('Geral', 'Total'), :] = [total_pct_mulheres, total_pct_homens]
+resumo_sobreviventes.loc[('Geral', 'Total'), :] = [total_qtd_mulheres, total_qtd_homens]
+
+# visualização final para terminal e imagem !!!!!!
+resumo_visual = resumo_pct.round(1).astype(str) + "% (" + resumo_sobreviventes.astype(int).astype(str) + ")"
+
+# Formatando os nomes das linhas (Índices)
 novos_indices = []
 for porto, classe in resumo_visual.index:
-    nome_porto = {'C': 'Cherbourg', 'Q': 'Queenstown', 'S': 'Southampton'}.get(porto, porto)
-    novos_indices.append(f"Porto: {nome_porto} | Classe: {int(classe)}")
+    if porto == 'Geral':
+        novos_indices.append("TOTAL GERAL DO NAVIO")
+    else:
+        n_porto = {'C': 'Cherbourg', 'Q': 'Queenstown', 'S': 'Southampton'}.get(porto, porto)
+        novos_indices.append(f"Porto: {n_porto} | Classe: {int(classe)}")
 
-# Aplicar os novos nomes 
 resumo_visual.index = novos_indices
-resumo_visual.columns = ['Taxa Sobrev. Mulheres(numero absoluto)', 'Taxa Sobrev. Homens(numero absoluto)']
-resumo_visual.index.name = 'Origem e Categoria Social'
+resumo_visual.columns = ['Sobrev. Mulheres (Taxa e Qtd)', 'Sobrev. Homens (Taxa e Qtd)']
 
-# Exibir no terminal 
-print("\nTabela 5 : análise embarcados, classe, sobreviventes, sex, age")
+# EXIBIÇÃO NO TERMINAL
 
-#nomes das colunas - faltava para o terminal
-resumo_visual.columns = ['Taxa Sobrev.Mulheres(n.absoluto)', 'Taxa Sobrev.Homens(n.absoluto)']
-
-# nomes dos portos e classes 
-
-novos_indices = []
-for porto, classe in resumo_pct.index: 
-    nome_porto = {'C': 'Cherbourg', 'Q': 'Queenstown', 'S': 'Southampton'}.get(porto, porto)
-    novos_indices.append(f"Porto: {nome_porto} | Classe: {int(classe)}")
-
-# Aplicar nomes ao índice e  título da primeira coluna
-resumo_visual.index = novos_indices
-resumo_visual.index.name = 'Origem e Categoria Social'
-
-# exibir tabela
-print( "="*95)
 print(resumo_visual)
-print("\n" + "="*95)
-# criar imagem tabela
+print("="*90)
 
-plt.close('all')
-
-fig, ax = plt.subplots(figsize=(16, 10)) # Aumentamos o "papel" da imagem para caber tudo
+# imagem tabela 6
+fig, ax = plt.subplots(figsize=(16, 10))
 ax.axis('off')
-
-# Criar a tabela com as cores de cabeçalho profissionais
 tb = ax.table(
     cellText=resumo_visual.values, 
     rowLabels=resumo_visual.index, 
     colLabels=resumo_visual.columns, 
-    cellLoc='center', 
-    loc='center',
-    colColours=['#2c3e50', '#2c3e50'] # Azul escuro
+    cellLoc='center', loc='center',
+    colColours=['#2c3e50', '#2c3e50']
 )
 
-# Estilização para ficar legível
 tb.auto_set_font_size(False)
-tb.set_fontsize(11)
-tb.scale(1.2, 2.5) # Dá altura às linhas para o texto não ficar "espremido"
+tb.set_fontsize(10)
+tb.scale(1.2, 2.5)
 
-# Pintar o texto do cabeçalho de branco e colocar negrito
+# Branco no cabeçalho e destaque no Total Geral
 for (row, col), cell in tb.get_celld().items():
-    if row == 0: # Cabeçalho
+    if row == 0: 
         cell.get_text().set_color('white')
         cell.get_text().set_weight('bold')
-    if col == -1: # Nomes das linhas (Portos/Classes)
+    if row == len(resumo_visual): # Linha do Total
+        cell.set_facecolor('#ecf0f1')
         cell.get_text().set_weight('bold')
-        cell.set_facecolor('#ffffff') # Fundo branco para garantir leitura
+    if col == -1: 
+        cell.get_text().set_weight('bold')
 
-plt.subplots_adjust(left=0.25, right=0.9, top=0.9, bottom=0.1)
-
-# salvar
-plt.savefig('tabela6_analise_porto_detalhada.png', dpi=150)
+plt.subplots_adjust(left=0.25)
+plt.savefig('tabela6_analise_porto_class_age.png', dpi=150)
 plt.close('all')
 
-print("\n✅ PROJETO FINALIZADO COM SUCESSO! Verifique os arquivos .png na sua pasta.")
+# Verificando a classe dos homens de Queenstown
+homens_q = df[(df['Embarked'] == 'Q') & (df['Sex'] == 'male')]
+
+print("\nTabela 7 - Distribuição de Classe dos Homens em Queenstown:")
+print(homens_q['Pclass'].value_counts())
+
+#queenstown teve 77 homens, e a maioria estava na 3ª classe
+
+print("\nTotal de Homens Sobreviventes em Queenstown:")
+print(homens_q['Survived'].sum())
+
+# Homens que embarcaram em Queenstown (Porto Q) 
+print("\n" + "="*90)
+print("Análise de homens que embarcaram em Queenstown (Porto Q) - Sobreviventes e Classe")
+
+# Filtrando apenas homens de Queenstown
+homens_q = df[(df['Embarked'] == 'Q') & (df['Sex'] == 'male')]
+
+# Criando a comparação entre Sobreviventes e Não Sobreviventes
+comparativo_q = homens_q.groupby('Survived').agg({
+    'PassengerId': 'count',
+    'Age': ['mean', 'median', 'std'],
+    'Pclass': lambda x: x.mode()[0] # Mostra a classe mais comum
+})
+
+# Renomeando colunas para clareza
+comparativo_q.columns = ['Total de Homens', 'Média Idade', 'Mediana Idade', 'Desvio Padrão', 'Classe Predominante']
+comparativo_q.index = ['Não Sobreviveu', 'Sobreviveu']
+
+print(comparativo_q)
+print("="*90)
+
+# Verificação de Classe (Por que morreram tanto?)
+print("\nDistribuição por Classe dos Homens em Queenstown (Total):")
+print(homens_q['Pclass'].value_counts())
+print("\n✅ PROJETO FINALIZADO! Todas as tabelas foram exibidas no terminal e salvas como imagem.")
+
 
 
 
