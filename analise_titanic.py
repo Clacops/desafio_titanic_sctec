@@ -58,7 +58,7 @@ print(df.isnull().sum())
 print("\n" + "="*80)
 
 print("\nFase 2 - Construindo a Tabela 3 e Primeiro Gráfico ") #age e survivers em taxas % e ns absolutos
-print ("\nMédia de sobrevivência por sexo: Números Absolutos e Percentuais")
+
 
 
 #print(df.groupby('Sex')['Survived'].mean()) optei por utilizar numeros absultos e taxa na mesma tabela
@@ -72,6 +72,8 @@ tabela_sexo.columns = ['Total Passageiros', 'Total Sobreviventes', 'Taxa de Sobr
 tabela_sexo['Taxa de Sobrevivência'] = tabela_sexo['Taxa de Sobrevivência'] * 100 # ajustar casas decimais
 
 print("Tabela 3: Sobrevivência por Sexo")
+print ("Média de sobrevivência por sexo: Números Absolutos e Percentuais")
+
 print(tabela_sexo)
 print("\n" + "="*80)
 
@@ -143,7 +145,7 @@ tabela_classe['Taxa de Sobrevivência (%)'] = (tabela_classe['Taxa de Sobrevivê
 tabela_classe = tabela_classe.sort_index()
 
 print("\nTabela 4: Análise de Sobrevivência por Classe Social")
-print("\n" + "="*80)
+
 print(tabela_classe)
 print("\n" + "="*80)
 
@@ -165,6 +167,7 @@ plt.close()
 #  Limpeza total, tenho tipo experiencias de nao encerrar totlamente os gráficos, então para evitar qualquer tipo de confusão ou sobreposição, vou garantir que todos os gráficos sejam fechados antes de criar o próximo. Isso é especialmente importante quando se trabalha com múltiplos gráficos em sequência.
 
 print("\nSegundo gráfico gerado: 'graf2_sex_age_survived.png'")
+print("\n" + "="*80)
 
 print("\nFase 4 - Construindo gráfico 3 - Sobrevivência por Sexo, Idade e Classe")
 # - Boxplot - Outliers
@@ -190,9 +193,9 @@ plt.close('all')
 print("Gráfico 3 salvo.")
 print("="*80)
 
-print("\nFase 5: Construindo tabela 5 - analise embarcados, sobreviventes, sex, age") # tabela_analise_porto_detalhada.png
+print("\nFase 5: Construindo tabela 5 - analise embarcados, classe, sobreviventes, sex, age") # tabela_analise_porto_detalhada.png
 
-# Agruparl (sempre partindo do df para evitar erros de repetição)
+# Agrupar (sempre partindo do df para evitar erros de repetição)
 resumo_pct = (df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].mean().unstack() * 100).round(1)
 resumo_qtd = df.groupby(['Embarked', 'Pclass', 'Sex'])['Survived'].count().unstack()
 
@@ -207,14 +210,14 @@ for porto, classe in resumo_visual.index:
 
 # Aplicar os novos nomes 
 resumo_visual.index = novos_indices
-resumo_visual.columns = ['Taxa Sobrev. Mulheres', 'Taxa Sobrev. Homens']
+resumo_visual.columns = ['Taxa Sobrev. Mulheres(numero absoluto)', 'Taxa Sobrev. Homens(numero absoluto)']
 resumo_visual.index.name = 'Origem e Categoria Social'
 
 # Exibir no terminal 
-print("\nTabela 5 - análise embarcados, sobreviventes, sex, age")
-#print(resumo_visual)
+print("\nTabela 5 : análise embarcados, classe, sobreviventes, sex, age")
+
 #nomes das colunas - faltava para o terminal
-resumo_visual.columns = ['Taxa Sobrev. Mulheres', 'Taxa Sobrev. Homens']
+resumo_visual.columns = ['Taxa Sobrev.Mulheres(n.absoluto)', 'Taxa Sobrev.Homens(n.absoluto)']
 
 # nomes dos portos e classes 
 
@@ -228,12 +231,13 @@ resumo_visual.index = novos_indices
 resumo_visual.index.name = 'Origem e Categoria Social'
 
 # exibir tabela
-print( "="*80)
+print( "="*95)
 print(resumo_visual)
-print("\n" + "="*80)
+print("\n" + "="*95)
 # criar imagem tabela
 
 plt.close('all')
+
 fig, ax = plt.subplots(figsize=(16, 10)) # Aumentamos o "papel" da imagem para caber tudo
 ax.axis('off')
 
@@ -264,7 +268,7 @@ for (row, col), cell in tb.get_celld().items():
 plt.subplots_adjust(left=0.25, right=0.9, top=0.9, bottom=0.1)
 
 # salvar
-plt.savefig('tabela4_analise_porto_detalhada.png', dpi=150)
+plt.savefig('tabela6_analise_porto_detalhada.png', dpi=150)
 plt.close('all')
 
 print("\n✅ PROJETO FINALIZADO COM SUCESSO! Verifique os arquivos .png na sua pasta.")
